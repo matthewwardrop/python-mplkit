@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mplstyles import cmap as colormap
 import numpy as np
 
-def contour_image(x,y,Z,cmap=None,vmax=None,vmin=None,interpolation='nearest',contour_opts={},label_opts={}.imshow_opts={},label=False):
+def contour_image(x,y,Z,cmap=None,vmax=None,vmin=None,interpolation='nearest',contour_opts={},label_opts={},imshow_opts={},clegendlabels=[],label=False):
 	ax = plt.gca()
 	
 	x_delta = float((x[-1]-x[0]))/(len(x)-1)/2.
