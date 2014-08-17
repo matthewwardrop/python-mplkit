@@ -2,7 +2,7 @@
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 import matplotlib.pyplot as plt
-from pylab import ScalarFormatter,LogFormatterMathtext,NullFormatter,LogLocator
+from matplotlib.ticker import ScalarFormatter,LogFormatterMathtext,NullFormatter,LogLocator
 
 class MPLStyle(object):
 
