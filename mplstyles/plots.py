@@ -26,7 +26,7 @@ def contour_image(x,y,Z,cmap=None,vmax=None,vmin=None,interpolation='nearest',co
 	cs = ax.imshow(Z,interpolation=interpolation,origin='lower',aspect='auto',extent=extent_delta,cmap=cmap,vmax=vmax,vmin=vmin, **imshow_opts)
 
 	# Draw contours
-	if contour_smooth != 0:
+	if contour_smoothing != 0:
 		scipy.ndimage.zoom(Z, contour_smoothing)
 	X, Y = np.meshgrid(x, y)
 	CS = ax.contour(X, Y, Z, extent=extent, origin='lower', **contour_opts )
