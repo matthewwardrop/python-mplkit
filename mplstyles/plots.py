@@ -2,7 +2,7 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 from mplstyles import cmap as colormap
 import numpy as np
-import scipy
+import scipy.ndimage
 
 def contour_image(x,y,Z,cmap=None,vmax=None,vmin=None,interpolation='nearest',contour_smoothing=0,contour_opts={},label_opts={},imshow_opts={},clegendlabels=[],label=False):
 	ax = plt.gca()
