@@ -2,8 +2,9 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 from mplstyles import cmap as colormap
 import numpy as np
+import scipy.ndimage
 
-def contour_image(x,y,Z,cmap=None,vmax=None,vmin=None,interpolation='nearest',contour_opts={},label_opts={},imshow_opts={},clegendlabels=[],label=False):
+def contour_image(x,y,Z,cmap=None,vmax=None,vmin=None,interpolation='nearest',contour_smoothing=0,contour_opts={},label_opts={},imshow_opts={},clegendlabels=[],label=False):
 	ax = plt.gca()
 
 	x_delta = float((x[-1]-x[0]))/(len(x)-1)/2.
@@ -25,6 +26,8 @@ def contour_image(x,y,Z,cmap=None,vmax=None,vmin=None,interpolation='nearest',co
 	cs = ax.imshow(Z,interpolation=interpolation,origin='lower',aspect='auto',extent=extent_delta,cmap=cmap,vmax=vmax,vmin=vmin, **imshow_opts)
 
 	# Draw contours
+	if contour_smoothing != 0:
+		scipy.ndimage.zoom(Z, contour_smoothing)
 	X, Y = np.meshgrid(x, y)
 	CS = ax.contour(X, Y, Z, extent=extent, origin='lower', **contour_opts )
 
