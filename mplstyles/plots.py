@@ -27,8 +27,8 @@ def contour_image(x,y,Z,cmap=None,vmax=None,vmin=None,interpolation='nearest',co
 
 	# Draw contours
 	if contour_smoothing != 0:
-		scipy.ndimage.zoom(Z, contour_smoothing)
-	X, Y = np.meshgrid(x, y)
+		Z = scipy.ndimage.zoom(Z, contour_smoothing)
+	X, Y = np.meshgrid(np.linspace(x[0],x[-1],Z.shape[0]), np.linspace(y[0],y[-1],Z.shape[1]))
 	CS = ax.contour(X, Y, Z, extent=extent, origin='lower', **contour_opts )
 
 	# Label contours
