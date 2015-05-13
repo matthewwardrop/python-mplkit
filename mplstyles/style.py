@@ -173,9 +173,9 @@ class SampleStyle(MPLStyle):
 					ax.xaxis.set_major_formatter(formatter_scalar)
 			if not isinstance(ax.yaxis.get_major_formatter(),NullFormatter):
 				if ax.yaxis.get_scale() == "log":
-					ax.yaxis.set_major_locator(LogLocator(base=100.0, subs=[1.0], numdecs=1))
+					ax.yaxis.set_major_locator(LogLocator(base=10.0, subs=[1.0], numdecs=1))
 					ax.yaxis.set_major_formatter(formatter_log)
-					ax.yaxis.set_minor_locator(LogLocator(base=10.0, subs=[10], numdecs=1)) # why is this necessary?
+					#ax.yaxis.set_minor_locator(LogLocator(base=10.0, subs=[10], numdecs=1)) # why is this necessary?
 				else:
 					ax.yaxis.set_major_formatter(formatter_scalar)
 
