@@ -100,7 +100,7 @@ class MPLStyle(object):
 		def update(ax_0):
 			ax_twin.set_xlim(*ax_0.get_xlim())
 			g = (lambda x:x) if f is None else f
-			ax_twin.set_xticklabels(f(ax_0.get_xticks()))
+			ax_twin.set_xticklabels(g(ax_0.get_xticks()))
 
 		ax.callbacks.connect('xlim_changed', update)
 		update(ax)
