@@ -4,7 +4,21 @@ from mplstyles import cmap as colormap
 import numpy as np
 import scipy.ndimage
 
-def contour_image(x,y,Z,cmap=None,vmax=None,vmin=None,interpolation='nearest',contour_smoothing=0,contour_opts={},label_opts={},imshow_opts={},clegendlabels=[],label=False):
+def contour_image(x,y,Z,
+					cmap=None,
+					vmax=None,
+					vmin=None,
+					interpolation='nearest',
+					contour_smoothing=0,
+					label=False,
+					clegendlabels=[],
+					cguides=False,
+					cguide_tomax=True,
+					cguide_stride=1,
+					contour_opts={},
+					label_opts={},
+					imshow_opts={},
+					cguide_opts={}):
 	ax = plt.gca()
 
 	x_delta = float((x[-1]-x[0]))/(len(x)-1)/2.
@@ -29,7 +43,13 @@ def contour_image(x,y,Z,cmap=None,vmax=None,vmin=None,interpolation='nearest',co
 	if contour_smoothing != 0:
 		Z = scipy.ndimage.zoom(Z, contour_smoothing)
 	X, Y = np.meshgrid(x, y)
-	CS = ax.contour(X, Y, Z, extent=extent, origin='lower', **contour_opts )
+	CS = ax.contour(X, Y, Z, extent=extent, origin='lower', vmax=vmax,vmin=vmin, **contour_opts )
+
+	# Draw guides on specified contours
+	if cguides is True:
+		cguides = CS.cvalues
+	if cguides is not False:
+		decorate_contour_segments(CS, cguides, cguide_stride, vmin, vmax, cguide_opts, tomax=cguide_tomax)
 
 	# Label contours
 	if label:
@@ -42,3 +62,29 @@ def contour_image(x,y,Z,cmap=None,vmax=None,vmin=None,interpolation='nearest',co
 		#ax.legend()
 
 	return cs, CS
+
+def decorate_contour_segments(CS, cvalues, stride=1, vmin=0, vmax=1, options={}, tomax=True):
+	for value in cvalues:
+		options['color'] = CS.cmap(float(value - vmin) / (vmax-vmin))
+		for index in np.where(np.isclose(value, CS.cvalues))[0]:
+			for segment in CS.allsegs[index]:
+				decorate_contour_segment(segment, stride=stride, options=options, tomax=tomax)
+
+def decorate_contour_segment(data, stride=1, options={}, tomax=True):
+	default_options = {'scale': 60, 'headaxislength': 3, 'headlength': 3, 'headwidth': 3, 'minshaft': 1}
+	default_options.update(options)
+
+	x = data[::stride,0]
+	y = data[::stride,1]
+
+	sign = 1 if tomax else -1
+	dx = -sign*np.diff(y)
+	dy = sign*np.diff(x)
+	l = np.sqrt(dx**2+dy**2)
+	dx /= l
+	dy /= l
+
+	x = 0.5*(x+np.roll(x,-1))
+	y = 0.5*(y+np.roll(y,-1))
+
+	plt.quiver(x, y, dx, dy, **default_options)
