@@ -1,5 +1,6 @@
 from matplotlib import cm
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as PathEffects
 from mplstyles import cmap as colormap
 import numpy as np
 import scipy.ndimage
@@ -12,6 +13,7 @@ def contour_image(x,y,Z,
 					contour_smoothing=0,
 					label=False,
 					clegendlabels=[],
+					outline=None,
 					cguides=False,
 					cguide_tomax=True,
 					cguide_stride=1,
@@ -31,6 +33,8 @@ def contour_image(x,y,Z,
 	ax.set_xlim(x[0],x[-1])
 	ax.set_ylim(y[0],y[-1])
 
+	aspect=(x[-1]-x[0])/(y[-1]-y[0])
+
 	if cmap is None:
 		cmap = colormap.reverse(cm.Blues)
 
@@ -45,15 +49,25 @@ def contour_image(x,y,Z,
 	X, Y = np.meshgrid(x, y)
 	CS = ax.contour(X, Y, Z, extent=extent, origin='lower', vmax=vmax,vmin=vmin, **contour_opts )
 
+	if outline is True:
+		outline = 'w'
+
+	if outline is not None:
+		plt.setp(CS.collections, path_effects=[
+        	PathEffects.withStroke(linewidth=3, foreground=outline)])
+
 	# Label contours
 	if label:
-		ax.clabel(CS, **label_opts)
+		clbls = ax.clabel(CS, **label_opts)
+		if outline is not None:
+			plt.setp(clbls, path_effects=[
+					PathEffects.withStroke(linewidth=1.5, foreground=outline)])
 
 	# Draw guides on specified contours
 	if cguides is True:
 		cguides = CS.cvalues
 	if cguides is not False:
-		decorate_contour_segments(CS, cguides, cguide_stride, vmin, vmax, cguide_opts, tomax=cguide_tomax)
+		decorate_contour_segments(CS, cguides, cguide_stride, vmin, vmax, cguide_opts, tomax=cguide_tomax, outline=outline, aspect=aspect)
 
 	# Show contours in legend if desired
 	if len(clegendlabels) > 0:
@@ -63,22 +77,32 @@ def contour_image(x,y,Z,
 
 	return cs, CS
 
-def decorate_contour_segments(CS, cvalues, stride=1, vmin=0, vmax=1, options={}, tomax=True):
+def decorate_contour_segments(CS, cvalues, stride=1, vmin=0, vmax=1, options={}, tomax=True, outline=None, aspect=1):
 	for value in cvalues:
 		options['color'] = CS.cmap(float(value - vmin) / (vmax-vmin))
 		for index in np.where(np.isclose(value, CS.cvalues))[0]:
 			for segment in CS.collections[index].get_segments():#for segment in CS.allsegs[index]:
-				decorate_contour_segment(segment, stride=stride, options=options, tomax=tomax, labelled=hasattr(CS,'cl'))
+				decorate_contour_segment(segment, stride=stride, options=options, tomax=tomax, labelled=hasattr(CS,'cl'), outline=outline, aspect=aspect)
 
-def decorate_contour_segment(data, stride=1, options={}, tomax=True, labelled=False):
-	default_options = {'scale': 60, 'headaxislength': 3, 'headlength': 3, 'headwidth': 3, 'minshaft': 1}
+def decorate_contour_segment(data, stride=1, options={}, tomax=True, labelled=False, outline=None, aspect=1):
+	default_options = {'scale': 0.15,
+			'scale_units': 'dots',
+			'headaxislength': 3,
+			'headlength': 3,
+			'headwidth': 3,
+			'minshaft': 1,
+			'units': 'dots',
+			#'angles': 'xy',
+			'edgecolor': outline,
+			'linewidth': 0 if outline is None else 0.2
+		}
 	default_options.update(options)
 
 	x = data[::stride,0]
 	y = data[::stride,1]
 
 	sign = 1 if tomax else -1
-	dx = -sign*np.diff(y)
+	dx = -sign*np.diff(y)*aspect
 	dy = sign*np.diff(x)
 	l = np.sqrt(dx**2+dy**2)
 	dx /= l

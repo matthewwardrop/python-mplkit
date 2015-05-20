@@ -26,13 +26,13 @@ def cmap_map(function,cmap):
         colorvector=  map(lambda x: x + (x[1], ), this_cdict.items())
         colorvector.sort()
         cdict[key] = colorvector
-	
+
     return matplotlib.colors.LinearSegmentedColormap('colormap',cdict,cmap.N)
-   
+
 def reverse(cmap):
 	if getattr(cmap,'_segmentdata',None) is not None:
 		data = cmap._segmentdata
-		
+
 		cdict = {}
 		for key in ['green','red','blue']:
 			newline = []
@@ -42,8 +42,53 @@ def reverse(cmap):
 				y2 = line[2]
 				newline.append(  (1-x,y,y2)  )
 			newline = sorted(newline,cmp=lambda x1,x2: cmp(x1[0],x2[0])	)
-			
+
 			cdict[key] = tuple(newline)
 		return matplotlib.colors.LinearSegmentedColormap('colormap',cdict,cmap.N)
 	print "Cannot reverse cmap"
 	return cmap
+
+from matplotlib.colors import Colormap
+class InverseColormap(Colormap):
+    """
+    A class that wraps around another object and returns its complement.
+    """
+    def __init__(self, cmap):
+        self.cmap = cmap
+
+    def __call__(self, X, alpha=None, bytes=False):
+        color = self.cmap(X, alpha=alpha, bytes=bytes)
+
+        def invert(c):
+            c = map(lambda x: 1-x, c)
+            c[-1] = 1
+            return tuple(c)
+
+        if isinstance(X, (np.ndarray,) ):
+            color = 1 - color
+            color[:,-1] = 1
+            return color
+        else:
+            return invert(color)
+
+    def set_bad(self, color='k', alpha=None):
+        self.cmap.set_bad(color=color, alpha=alpha)
+
+    def set_under(self, color='k', alpha=None):
+        self.cmap.set_under(color=color, alpha=alpha)
+
+    def set_over(self, color='k', alpha=None):
+        self.cmap.set_over(color=color, alpha=alpha)
+
+    def _set_extremes(self):
+        self.cmap._set_extremes()
+
+    def _init(self):
+        """Generate the lookup table, self._lut"""
+        return self.cmap._init()
+
+    def is_gray(self):
+        return self.cmap.is_gray()
+
+    def __getattr__(self, key):
+        return getattr(self.cmap,key)
