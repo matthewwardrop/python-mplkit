@@ -45,15 +45,15 @@ def contour_image(x,y,Z,
 	X, Y = np.meshgrid(x, y)
 	CS = ax.contour(X, Y, Z, extent=extent, origin='lower', vmax=vmax,vmin=vmin, **contour_opts )
 
+	# Label contours
+	if label:
+		ax.clabel(CS, **label_opts)
+
 	# Draw guides on specified contours
 	if cguides is True:
 		cguides = CS.cvalues
 	if cguides is not False:
 		decorate_contour_segments(CS, cguides, cguide_stride, vmin, vmax, cguide_opts, tomax=cguide_tomax)
-
-	# Label contours
-	if label:
-		ax.clabel(CS, **label_opts)
 
 	# Show contours in legend if desired
 	if len(clegendlabels) > 0:
@@ -67,10 +67,10 @@ def decorate_contour_segments(CS, cvalues, stride=1, vmin=0, vmax=1, options={},
 	for value in cvalues:
 		options['color'] = CS.cmap(float(value - vmin) / (vmax-vmin))
 		for index in np.where(np.isclose(value, CS.cvalues))[0]:
-			for segment in CS.allsegs[index]:
-				decorate_contour_segment(segment, stride=stride, options=options, tomax=tomax)
+			for segment in CS.collections[index].get_segments():#for segment in CS.allsegs[index]:
+				decorate_contour_segment(segment, stride=stride, options=options, tomax=tomax, labelled=hasattr(CS,'cl'))
 
-def decorate_contour_segment(data, stride=1, options={}, tomax=True):
+def decorate_contour_segment(data, stride=1, options={}, tomax=True, labelled=False):
 	default_options = {'scale': 60, 'headaxislength': 3, 'headlength': 3, 'headwidth': 3, 'minshaft': 1}
 	default_options.update(options)
 
@@ -86,5 +86,10 @@ def decorate_contour_segment(data, stride=1, options={}, tomax=True):
 
 	x = 0.5*(x+np.roll(x,-1))
 	y = 0.5*(y+np.roll(y,-1))
+
+	if labelled:
+		x,y,dx,dy = x[1:-2], y[1:-2], dx[1:-1], dy[1:-1]
+	else:
+		x,y = x[:-1], y[:-1]
 
 	plt.quiver(x, y, dx, dy, **default_options)
