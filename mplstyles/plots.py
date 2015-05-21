@@ -1,7 +1,9 @@
 from matplotlib import cm
+import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as PathEffects
 from mplstyles import cmap as colormap
+import types
 import numpy as np
 import scipy.ndimage
 
@@ -50,18 +52,32 @@ def contour_image(x,y,Z,
 	CS = ax.contour(X, Y, Z, extent=extent, origin='lower', vmax=vmax,vmin=vmin, **contour_opts )
 
 	if outline is True:
-		outline = 'w'
+		def outline(cvalue, vmin=0, vmax=1):
+			color = CS.cmap(float(cvalue - vmin) / (vmax-vmin))
+			if np.sqrt(np.sum(np.array(color[:3])**2)) <= 0.5:
+				return (1,1,1,0.2)
+			return (0,0,0,0.2)
+	if type(outline) is types.FunctionType or isinstance(outline, colors.Colormap):
+		outline = [outline(c, vmin=vmin, vmax=vmax) for c in CS.cvalues]
+	elif type(outline) is list:
+		pass
+	elif outline is None:
+		pass
+	else:
+		outline = [outline]*len(CS.cvalues)
 
 	if outline is not None:
-		plt.setp(CS.collections, path_effects=[
-        	PathEffects.withStroke(linewidth=3, foreground=outline)])
+		for i,collection in enumerate(CS.collections):
+			plt.setp(collection, path_effects=[
+				PathEffects.withStroke(linewidth=3, foreground=outline[i])])
 
 	# Label contours
 	if label:
 		clbls = ax.clabel(CS, **label_opts)
 		if outline is not None:
-			plt.setp(clbls, path_effects=[
-					PathEffects.withStroke(linewidth=1.5, foreground=outline)])
+			for i,clbl in enumerate(clbls):
+				plt.setp(clbl, path_effects=[
+						PathEffects.withStroke(linewidth=1.5, foreground=outline[np.argmin(np.abs(CS.cvalues-float(clbl.get_text())))])])
 
 	# Draw guides on specified contours
 	if cguides is True:
@@ -78,18 +94,18 @@ def contour_image(x,y,Z,
 	return cs, CS
 
 def decorate_contour_segments(CS, cvalues, stride=1, vmin=0, vmax=1, options={}, tomax=True, outline=None, aspect=1):
-	for value in cvalues:
+	for i,value in enumerate(cvalues):
 		options['color'] = CS.cmap(float(value - vmin) / (vmax-vmin))
 		for index in np.where(np.isclose(value, CS.cvalues))[0]:
 			for segment in CS.collections[index].get_segments():#for segment in CS.allsegs[index]:
-				decorate_contour_segment(segment, stride=stride, options=options, tomax=tomax, labelled=hasattr(CS,'cl'), outline=outline, aspect=aspect)
+				decorate_contour_segment(segment, stride=stride, options=options, tomax=tomax, labelled=hasattr(CS,'cl'), outline=outline[i] if outline is not None else None, aspect=aspect)
 
 def decorate_contour_segment(data, stride=1, options={}, tomax=True, labelled=False, outline=None, aspect=1):
-	default_options = {'scale': 0.15,
+	default_options = {'scale': 0.2,
 			'scale_units': 'dots',
-			'headaxislength': 3,
-			'headlength': 3,
-			'headwidth': 3,
+			'headaxislength': 2,
+			'headlength': 2,
+			'headwidth': 2,
 			'minshaft': 1,
 			'units': 'dots',
 			#'angles': 'xy',
