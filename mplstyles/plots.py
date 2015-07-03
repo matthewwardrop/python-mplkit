@@ -42,6 +42,11 @@ def contour_image(x,y,Z,
 
 	Z = Z.transpose()
 
+	if vmin is None:
+		vmin = np.min(Z)
+	if vmax is None:
+		vmax = np.max(Z)
+
 	#plt.contourf(X,Y,self.pdata,interpolation=interpolation)
 	cs = ax.imshow(Z,interpolation=interpolation,origin='lower',aspect='auto',extent=extent_delta,cmap=cmap,vmax=vmax,vmin=vmin, **imshow_opts)
 
