@@ -140,8 +140,9 @@ class SampleStyle(MPLStyle):
 		plt.rcParams['legend.loc'] = 'best'
 
 		plt.rcParams['text.usetex'] = True
+		plt.rc('font', family='serif')
 		plt.rcParams['axes.formatter.limits'] = [-2, 2]
-		plt.rcParams['axes.titlesize'] = 17
+		plt.rcParams['axes.titlesize'] = 14
 		plt.rcParams['axes.labelsize'] = 12
 		plt.rcParams['lines.linewidth'] = 2.
 		plt.rcParams['axes.formatter.use_mathtext'] = True
