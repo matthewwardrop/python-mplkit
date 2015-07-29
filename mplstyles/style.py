@@ -47,11 +47,11 @@ class MPLStyle(object):
 
 	############## Axes methods ############################################
 
-	def label_plot(self,ax=None,label=None):
-		self._label_plot(self.__get_axes(ax),label)
+	def label_plot(self,label=None,ax=None):
+		self._label_plot(label,self.__get_axes(ax))
 
 	@abstractmethod
-	def _label_plot(self,ax,label):
+	def _label_plot(self,label,ax):
 		pass
 
 	def set_axes_lim(self,ax=None,x_lim=None,y_lim=None,x_space=False,y_space=True):
@@ -183,7 +183,7 @@ class SampleStyle(MPLStyle):
 		#bbox = ax.get_position()
 		#ax.set_position([bbox.xmin+x_shift,bbox.ymin+y_shift,bbox.width,bbox.height])
 
-	def _label_plot(self,ax,label,x=0.05,y=0.9):
+	def _label_plot(self,label,ax,x=0.05,y=0.9):
 		if isinstance(label,str):
 
 			if x > 0.5:
