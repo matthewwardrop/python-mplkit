@@ -2,12 +2,12 @@
 
 from distutils.core import setup
 
-setup(name='MPLStyles',
-      version='0.1',
-      description='A style manager for matplotlib.',
+setup(name='MPLKit',
+      version='0.2',
+      description='A collection of tools that sit on top of matplotlib that allow one to consistently format plots.',
       author='Matthew Wardrop',
       author_email='mister.wardrop@gmail.com',
-      url='http://www.matthewwardrop.info/',
+      url='http://github.com/matthewwardrop/mplkit',
       #package_dir={'parameters':'.'},
-      packages=['mplstyles'],
+      packages=['mplkit'],
      )

@@ -1,6 +1,6 @@
 # Maintainer: Matthew Wardrop <mister.wardrop@gmail.com>
-pkgname=python2-mplstyles
-pkgver=0.1
+pkgname=python2-mplkit
+pkgver=0.2
 pkgrel=1
 pkgdesc="A style collection for matplotlib."
 arch=('i686' 'x86_64')
