@@ -10,11 +10,18 @@ from matplotlib.colorbar import ColorbarBase
 
 cmap = matplotlib.cm.Blues
 id_cmap = WrappedColormap(cmap)
-inv_cmap = InverseColormap(cmap)
-mono_cmap = MonochromeColormap(cmap)
-rev_cmap = ReverseColormap(cmap)
+inv_cmap = InvertedColormap(cmap)
+mono_cmap = DesaturatedColormap(cmap)
+rev_cmap = ReversedColormap(cmap)
 cat_cmap = ConcatenatedColormap(cmap,0.2,inv_cmap,0.8,mono_cmap)
 norm = Normalize(vmin=0, vmax=1)
+
+cmap(1)
+id_cmap(1)
+inv_cmap(1)
+mono_cmap(1)
+rev_cmap(1)
+cat_cmap(1)
 
 plt.subplot(6,1,1)
 plt.title("Normal")

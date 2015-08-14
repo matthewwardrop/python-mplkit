@@ -49,13 +49,13 @@ class WrappedColormap(Colormap):
 
 		return get_luma(color)
 
-class ReverseColormap(WrappedColormap):
+class ReversedColormap(WrappedColormap):
 	'Reverses the color map.'
 
 	def __call__(self, X, alpha=None, bytes=False):
 		return self.cmap(1-X, alpha=alpha, bytes=bytes)
 
-class InverseColormap(WrappedColormap):
+class InvertedColormap(WrappedColormap):
 	'Inverts the color map according to (R,G,B,A) - > (1-R,1-G,1-B,A).'
 
 	def __call__(self, X, alpha=None, bytes=False):
@@ -73,7 +73,7 @@ class InverseColormap(WrappedColormap):
 		else:
 			return invert(color)
 
-class MonochromeColormap(WrappedColormap):
+class DesaturatedColormap(WrappedColormap):
 	'Constructs a new colormap that preserves only the luma; or "brightess".'
 
 	def __call__(self, X, alpha=None, bytes=False):
@@ -120,8 +120,11 @@ class ConcatenatedColormap(WrappedColormap):
 			scaled_v = (v-min)/(max-min)
 			return tuple(self.cmaps[cmap_index](scaled_v,alpha=alpha,bytes=bytes))
 
-		vfunc = np.vectorize(get_color,otypes=["float","float","float", "float"])
-		return np.rollaxis(np.array(vfunc(X)),0,len(X.shape)+1)
+		if isinstance(X,np.ndarray):
+			vfunc = np.vectorize(get_color,otypes=["float","float","float", "float"])
+			return np.rollaxis(np.array(vfunc(X)),0,len(X.shape)+1)
+		else:
+			return get_color(X)
 
 	def set_bad(self, color='k', alpha=None):
 		pass#self.cmap.set_bad(color=color, alpha=alpha)

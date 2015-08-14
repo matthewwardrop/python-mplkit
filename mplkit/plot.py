@@ -7,7 +7,7 @@ import types
 import numpy as np
 import scipy.ndimage
 
-from .cmap import ReverseColormap, WrappedColormap, InverseColormap
+from .cmap import ReversedColormap, WrappedColormap, InvertedColormap
 
 __all__ = ['contour_image']
 
@@ -78,7 +78,7 @@ def contour_image(x,y,Z,
 	if contour_smoothing != 1:
 		Z = scipy.ndimage.zoom(Z, contour_smoothing)
 	if 'cmap' not in contour_opts:
-		contour_opts['cmap'] = InverseColormap(imshow_cs.cmap)
+		contour_opts['cmap'] = InvertedColormap(imshow_cs.cmap)
 	elif 'cmap' in contour_opts and not isinstance(contour_opts['cmap'], WrappedColormap):
 		contour_opts['cmap'] = WrappedColormap(contour_opts['cmap'])
 
