@@ -1,2 +1,2 @@
 __author__ = "Matthew Wardrop < mister.wardrop@gmail.com >"
-__version__ = '0.5'
+__version__ = '0.6'
