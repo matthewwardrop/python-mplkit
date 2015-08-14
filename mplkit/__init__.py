@@ -1,2 +1,2 @@
-from .style import MPLStyle, SampleStyle
-from .plots import contour_image
+__author__ = "Matthew Wardrop < mister.wardrop@gmail.com >"
+__version__ = '0.2'

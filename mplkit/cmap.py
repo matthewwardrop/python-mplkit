@@ -1,94 +1,155 @@
 import matplotlib
+from matplotlib.colors import Colormap, LinearSegmentedColormap, ListedColormap
+
 import numpy as np
-def cmap_map(function,cmap):
-    """ Applies function (which should operate on vectors of shape 3:
-    [r, g, b], on colormap cmap. This routine will break any discontinuous     points in a colormap.
-    """
-    cdict = cmap._segmentdata
-    step_dict = {}
-    # First get the list of points where the segments start or end
-    for key in ('red','green','blue'):         step_dict[key] = map(lambda x: x[0], cdict[key])
-    step_list = sum(step_dict.values(), [])
-    step_list = np.array(list(set(step_list)))
-    # Then compute the LUT, and apply the function to the LUT
-    reduced_cmap = lambda step : np.array(cmap(step)[0:3])
-    old_LUT = np.array(map( reduced_cmap, step_list))
-    new_LUT = np.array(map( function, old_LUT))
-    # Now try to make a minimal segment definition of the new LUT
-    cdict = {}
-    for i,key in enumerate(('red','green','blue')):
-        this_cdict = {}
-        for j,step in enumerate(step_list):
-            if step in step_dict[key]:
-                this_cdict[step] = new_LUT[j,i]
-            elif new_LUT[j,i]!=old_LUT[j,i]:
-                this_cdict[step] = new_LUT[j,i]
-        colorvector=  map(lambda x: x + (x[1], ), this_cdict.items())
-        colorvector.sort()
-        cdict[key] = colorvector
 
-    return matplotlib.colors.LinearSegmentedColormap('colormap',cdict,cmap.N)
+class WrappedColormap(Colormap):
+	"""
+	`WrappedColormap` wraps around an instance of `matplotlib.colors.Colormap`,
+	provides the `luma` method, but otherwise does nothing to the colormap.
+	"""
+	def __init__(self, cmap, *args, **kwargs):
+		assert(isinstance(cmap, Colormap))
+		self.cmap = cmap
+		self.init(*args,**kwargs)
 
-def reverse(cmap):
-	if getattr(cmap,'_segmentdata',None) is not None:
-		data = cmap._segmentdata
+	def init(*args,**kwargs):
+		pass
 
-		cdict = {}
-		for key in ['green','red','blue']:
-			newline = []
-			for line in data[key]:
-				x = line[0]
-				y = line[1]
-				y2 = line[2]
-				newline.append(  (1-x,y,y2)  )
-			newline = sorted(newline,cmp=lambda x1,x2: cmp(x1[0],x2[0])	)
+	def __call__(self, X, alpha=None, bytes=False):
+		return self.cmap(X, alpha=alpha, bytes=bytes)
 
-			cdict[key] = tuple(newline)
-		return matplotlib.colors.LinearSegmentedColormap('colormap',cdict,cmap.N)
-	print "Cannot reverse cmap"
-	return cmap
+	def set_bad(self, color='k', alpha=None):
+		self.cmap.set_bad(color=color, alpha=alpha)
 
-from matplotlib.colors import Colormap
-class InverseColormap(Colormap):
-    """
-    A class that wraps around another object and returns its complement.
-    """
-    def __init__(self, cmap):
-        self.cmap = cmap
+	def set_under(self, color='k', alpha=None):
+		self.cmap.set_under(color=color, alpha=alpha)
 
-    def __call__(self, X, alpha=None, bytes=False):
-        color = self.cmap(X, alpha=alpha, bytes=bytes)
+	def set_over(self, color='k', alpha=None):
+		self.cmap.set_over(color=color, alpha=alpha)
 
-        def invert(c):
-            c = map(lambda x: 1-x, c)
-            c[-1] = 1
-            return tuple(c)
+	def _set_extremes(self):
+		self.cmap._set_extremes()
 
-        if isinstance(X, (np.ndarray,) ):
-            color = 1 - color
-            color[:,-1] = 1
-            return color
-        else:
-            return invert(color)
+	def _init(self):
+		"""Generate the lookup table, self._lut"""
+		return self.cmap._init()
 
-    def set_bad(self, color='k', alpha=None):
-        self.cmap.set_bad(color=color, alpha=alpha)
+	def is_gray(self):
+		return self.cmap.is_gray()
 
-    def set_under(self, color='k', alpha=None):
-        self.cmap.set_under(color=color, alpha=alpha)
+	def __getattr__(self, key):
+		return getattr(self.cmap,key)
 
-    def set_over(self, color='k', alpha=None):
-        self.cmap.set_over(color=color, alpha=alpha)
+	def luma(self, X, alpha=None, bytes=False):
+		color = self(X, alpha=alpha, bytes=bytes)
 
-    def _set_extremes(self):
-        self.cmap._set_extremes()
+		def get_luma(c):
+			return np.average(c,axis=-1,weights=[0.299,0.587,0.114,0])
 
-    def _init(self):
-        """Generate the lookup table, self._lut"""
-        return self.cmap._init()
+		return get_luma(color)
 
-    def is_gray(self):
-        return self.cmap.is_gray()
+class ReverseColormap(WrappedColormap):
+	'Reverses the color map.'
 
-    def __getattr__(self, key):
-        return getattr(self.cmap,key)
+	def __call__(self, X, alpha=None, bytes=False):
+		return self.cmap(1-X, alpha=alpha, bytes=bytes)
+
+class InverseColormap(WrappedColormap):
+	'Inverts the color map according to (R,G,B,A) - > (1-R,1-G,1-B,A).'
+
+	def __call__(self, X, alpha=None, bytes=False):
+		color = self.cmap(X, alpha=alpha, bytes=bytes)
+
+		def invert(c):
+			c = map(lambda x: 1-x, c)
+			c[-1] = 1
+			return tuple(c)
+
+		if isinstance(X, (np.ndarray,) ):
+			color = 1 - color
+			color[...,-1] = 1
+			return color
+		else:
+			return invert(color)
+
+class MonochromeColormap(WrappedColormap):
+	'Constructs a new colormap that preserves only the luma; or "brightess".'
+
+	def __call__(self, X, alpha=None, bytes=False):
+		color = self.cmap(X, alpha=alpha, bytes=bytes)
+
+		def get_luma(c):
+			return np.average(c,axis=-1,weights=[0.299,0.587,0.114,0])
+
+		r = np.kron(get_luma(color),[1,1,1,1]).reshape(np.shape(X)+(4,))
+		r[...,-1] = 1
+		return r
+
+class ConcatenatedColormap(WrappedColormap):
+	"""
+	`ConcatenatedColormap` wraps around an instances of `matplotlib.colors.Colormap`,
+	and when used as a colour map returns the result of concatenating linearly the
+	maps. Should be initialised as:
+	ConcatenatedColormap(<cmap1>,0.2,<cmap2>,...)
+	Where the numbers indicate where the cmaps are joined. The 0 at the beginning and the 1
+	at the end are inferred.
+	"""
+
+	def init(self,*args):
+		self.cmaps = [self.cmap]
+		self.cmap_joins = []
+		assert(len(args) % 2 == 0)
+		for i in xrange(0,len(args),2):
+			self.cmap_joins.append(float(args[i]))
+			assert(args[i] < 1 and args[i] > 0 and (i==0 or args[i] > self.cmap_joins[-2]))
+			assert(isinstance(args[i+1],Colormap))
+			self.cmaps.append(args[i+1])
+
+	def __call__(self, X, alpha=None, bytes=False):
+		def get_color(v):
+			min = 0
+			max = 1
+			cmap_index = np.sum(np.array(self.cmap_joins) < v)
+			assert (cmap_index <= len(self.cmaps))
+			if (cmap_index > 0):
+				min = self.cmap_joins[cmap_index-1]
+			if (cmap_index < len(self.cmaps)-1):
+				max = self.cmap_joins[cmap_index]
+
+			scaled_v = (v-min)/(max-min)
+			return tuple(self.cmaps[cmap_index](scaled_v,alpha=alpha,bytes=bytes))
+
+		vfunc = np.vectorize(get_color,otypes=["float","float","float", "float"])
+		return np.rollaxis(np.array(vfunc(X)),0,len(X.shape)+1)
+
+	def set_bad(self, color='k', alpha=None):
+		pass#self.cmap.set_bad(color=color, alpha=alpha)
+
+	def set_under(self, color='k', alpha=None):
+		pass#self.cmap.set_under(color=color, alpha=alpha)
+
+	def set_over(self, color='k', alpha=None):
+		pass#self.cmap.set_over(color=color, alpha=alpha)
+
+	def _set_extremes(self):
+		pass#self.cmap._set_extremes()
+
+	def _init(self):
+		"""Generate the lookup table, self._lut"""
+		for cm in self.cmaps:
+			cm._init()
+
+	def is_gray(self):
+		return np.all([cm.is_gray() for cm in self.cmaps])
+
+	def __getattr__(self, key):
+		return getattr(self.cmap,key)
+
+	def luma(self, X, alpha=None, bytes=False):
+		color = self(X, alpha=alpha, bytes=bytes)
+
+		def get_luma(c):
+			return np.average(c,axis=-1,weights=[0.299,0.587,0.114,0])
+
+		return get_luma(color)
