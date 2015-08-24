@@ -68,7 +68,7 @@ class MPLStyle(object):
 				     transform = ax.transAxes,
 				     fontsize = 'x-large',
 				     color = 'white',
-				     bbox=dict(facecolor='black', alpha=0.5, pad=10))
+				     bbox=dict(facecolor='black', alpha=1, boxstyle="circle"))
 
 	def set_axes_lim(self,ax=None,x_lim=None,y_lim=None,x_space=False,y_space=True):
 
